@@ -1,0 +1,6 @@
+2024-07-30 21:07:11,713 salesDepart [INFO]  file:../include/../log4cpp/log4cpp.h func:getInstance msg:an instance of Myloger init successed! line:63
+2024-07-30 21:07:11,713 salesDepart [INFO]  file:DictProducer.cc func:DictProducer msg:info line:15
+2024-07-30 21:07:11,713 salesDepart [INFO]  file:DictProducer.cc func:createIndex msg:info line:266
+2024-07-30 21:07:11,747 salesDepart [INFO]  file:DictProducer.cc func:createIndex msg:info line:287
+2024-07-30 21:07:12,026 salesDepart [INFO]  file:DictProducer.cc func:createIndex msg:info line:318
+2024-07-30 21:07:12,030 salesDepart [INFO]  file:DictProducer.cc func:createIndex msg:info line:324

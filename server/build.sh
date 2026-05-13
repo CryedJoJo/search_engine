@@ -11,9 +11,9 @@ fi
 
 # 清理并构建项目
 rm -rf build
-mkdir build || exit 1
-cd build || exit 1
-cmake .. || exit 1
-make || exit 1
-cd build || exit 1
-# ./a.out
+mkdir build
+cd build
+cmake ..
+make
+cd build
+./a.out

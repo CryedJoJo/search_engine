@@ -1,5 +1,7 @@
 #include "EchoServer.h"
 #include "LoadFile.h"
+#include <csignal>   // for signal() and SIGINT
+#include <unistd.h>  // for other system calls
 #include <iostream>
 
 using std::cout;

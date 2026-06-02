@@ -1,1 +1,3 @@
-# waiting for update...
+# 服务器运行配置
+ip: 0.0.0.0 #全网ip
+port: 44444

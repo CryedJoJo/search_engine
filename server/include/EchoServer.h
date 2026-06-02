@@ -5,6 +5,7 @@
 
 #include "ThreadPool.h"
 #include "TcpServer.h"
+#include "CacheManager.h"
 #include <sw/redis++/redis++.h>
 
 using namespace sw::redis;

@@ -45,20 +45,35 @@ else()
     message(STATUS "Console logging DISABLED")
 endif()
 
-option(DEBUG_LOGGING "Enable DEBUG logging" OFF)  # 默认开启
+option(DEBUG_LOGGING "Enable DEBUG logging" ON)  # 默认开启
 if(DEBUG_LOGGING)
-    add_compile_definitions(__DEBUG_LOG)
-    message(STATUS "DEBUG logging ENABLED")
+    add_compile_definitions(__LOG_DEBUG)
+    message(STATUS "DEBUG logging ENABLED (implies INFO)")
 else()
     message(STATUS "DEBUG logging DISABLED")
+    option(INFO_LOGGING "Enable INFO logging" ON)
+    if(INFO_LOGGING)
+        add_compile_definitions(__LOG_INFO)
+        message(STATUS "INFO logging ENABLED")
+    else()
+        message(STATUS "INFO logging DISABLED")
+    endif()
 endif()
 
-option(INFO_LOGGING "Enable DEBUG logging" ON)  # 默认开启
-if(INFO_LOGGING)
-    add_compile_definitions(__INFO_LOG)
-    message(STATUS "INFO logging ENABLED")
+option(REDIS_ON "Enable REDIS_ON" OFF)
+if(REDIS_ON)
+    add_compile_definitions(REDIS_ON)
+    message(STATUS "REDIS_ON ENABLED")
 else()
-    message(STATUS "INFO logging DISABLED")
+    message(STATUS "REDIS_ON DISABLED")
+endif()
+
+option(LRUCACHE_ON "Enable LRU cache" ON)
+if(LRUCACHE_ON)
+    add_compile_definitions(LRUCACHE_ON)
+    message(STATUS "LRU cache ENABLED")
+else()
+    message(STATUS "LRU cache DISABLED")
 endif()
 
 #将可执行文件的依赖文件目录设置为SRC

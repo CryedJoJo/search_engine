@@ -22,7 +22,6 @@ const char *const CLEANED_WEB_PAGE = "../../webpageinfo/cleanedWebPage.txt"; // 
 #include <unistd.h>
 #include <cmath>
 
-#define REDIS_ON
 using std::set;
 using std::map;
 using std::cout;
@@ -112,20 +111,42 @@ double cosineSimilarity(const std::vector<double> &v1, const std::vector<double>
 void MyTask::searchProcess()
 {
 #ifdef REDIS_ON
-	//1.检索redis，如果redis有数据，就获取redis数据返回，并用_con发送
-	//2.如果redis没有检索到数据，就执行搜索任务，并将搜索到的信息存入redis
+	WARN("redis on!!!");
 	auto redis = Redis("tcp://127.0.0.1:6379");
-	auto val = redis.get(_msg);
-	if(val)
-	{
-		_con->sendInLoop(*val);
-		INFO("redis target!!!");
-		std::cout << "redis target!!!" << std::endl;
-		return;
+	try{
+		auto val = redis.get(_msg);
+		if(val)
+		{
+			_con->sendInLoop(*val);
+			INFO("redis target!!!");
+			std::cout << "redis target!!!" << std::endl;
+			return;
+		}
+		std::cout << "redis miss!!!" << std::endl;
+		WARN("redis miss!!!");
+	} catch (const sw::redis::ProtoError &e){
+		ERROR("redis get ProtoError for key '{}': {}", _msg, e.what());
+	} catch (const sw::redis::Error &e){
+		ERROR("redis get Error for key '{}': {}", _msg, e.what());
+	} catch (const std::exception &e){
+		ERROR("redis get exception for key '{}': {}", _msg, e.what());
 	}
-	std::cout << "redis miss!!!" << std::endl;
-	WARN("redis miss!!!");
-#endif REDIS_ON
+#endif
+
+#ifdef LRUCACHE_ON
+	WARN("lrucache on!!!");
+	auto &cm = *CacheManager::getInstance();
+	{
+		auto val = cm.get(_con, _msg);
+		if(val)
+		{
+			_con->sendInLoop(*val);
+			INFO("lrucache target!!!");
+			return;
+		}
+		INFO("lrucache miss!!!");
+	}
+#endif
 
 	//TODO:
 	//加载清洗后的离线网页库 用seekg(pos)+read(lenght)来获取网页
@@ -300,14 +321,25 @@ void MyTask::searchProcess()
 		times = 0;
 		WARN("start send artical");
 	#ifdef REDIS_ON
-		bool ret = redis.set(_msg, msg);
-
-		if(!ret)
-		{
-			ERROR("set key:{} in redis failed!", _msg);
+		try{
+			bool ret = redis.set(_msg, msg);
+			if(!ret)
+			{
+				ERROR("set key:{} in redis failed!", _msg);
+			} else {
+				INFO("set key:{} in redis successed!", _msg);
+			}
+		} catch (const sw::redis::ProtoError &e){
+			ERROR("redis set ProtoError for key '{}': {}", _msg, e.what());
+		} catch (const sw::redis::Error &e){
+			ERROR("redis set Error for key '{}': {}", _msg, e.what());
+		} catch (const std::exception &e){
+			ERROR("redis set exception for key '{}': {}", _msg, e.what());
 		}
-		INFO("set key:{} in redis successed!", _msg);
-	#endif REDIS_ON
+	#endif
+	#ifdef LRUCACHE_ON
+		cm.set(_con, _msg, msg);
+	#endif
 		_con->sendInLoop(string(msg));
 	}
 }
@@ -392,6 +424,10 @@ void EchoServer::start()
 	INFO("start initing...");
 	_pool.start();
 
+#ifdef LRUCACHE_ON
+	CacheManager::getInstance()->startSync();
+#endif
+
 	using namespace std::placeholders;
 	//将所有的回调都写到这里来
 	_server.setAllCallback(std::bind(&EchoServer::onNewConnection, this, _1), std::bind(&EchoServer::onMessage, this, _1), std::bind(&EchoServer::onClose, this, _1));
@@ -403,6 +439,9 @@ void EchoServer::stop()
 {
 	WARN("start stop...!!!");
 	_pool.stop();
+#ifdef LRUCACHE_ON
+	CacheManager::getInstance()->stopSync();
+#endif
 	_server.stop();
 }
 
@@ -412,6 +451,9 @@ void EchoServer::onNewConnection(const TcpConnectionPtr &con)
 	string str {con->toString()};
 	cout << str << " has connected!" << endl;
 	INFO("{} has connected!", str);
+#ifdef LRUCACHE_ON
+	CacheManager::getInstance()->onNewConnection(con);
+#endif
 }
 
 //接收客户端msg，根据msg选择不同任务
@@ -442,4 +484,7 @@ void EchoServer::onClose(const TcpConnectionPtr &con)
 {
 	cout << con->toString() << " has closed!!!" << endl;
 	ERROR(" {} has closed!!!", con->toString());
+#ifdef LRUCACHE_ON
+	CacheManager::getInstance()->onClose(con);
+#endif
 }

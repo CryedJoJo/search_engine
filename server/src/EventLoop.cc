@@ -36,8 +36,7 @@ void EventLoop::loop()
 {
 	INFO("start looping...");
 	_isLooping = true;
-	while(_isLooping)
-	{
+	while(_isLooping) {
 		waitEpollFd();
 	}
 }
@@ -51,19 +50,15 @@ void EventLoop::unloop()
 void EventLoop::waitEpollFd()
 {
 	int nready = 0;
-	do
-	{
+	do {
 		nready = epoll_wait(_epfd, &*_evtList.begin(), _evtList.size(), 3000);
 		DEBUG("epoll wait target nready flag:{}", nready);
 	} while((-1 == nready && errno == EINTR));
 
-	if(-1 == nready)
-	{
+	if(-1 == nready) {
 		perror("-1 == nready");
 		return;
-	}
-	else if(0 == nready)
-	{
+	} else if(0 == nready) {
 		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 		// BUG: 静态变量在单线程 epoll 中访问，若将来 EventLoop 多线程化将出现数据竞争
 		// static uint32_t time = 0;
@@ -71,37 +66,29 @@ void EventLoop::waitEpollFd()
 		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 		uint32_t time = 0;
 		cout << ">>epoll_wait timeout!!! server online:" << time << "s" << endl;
-	}
-	else
-	{
+	} else {
 		//考虑一个问题，vector有可能越界的问题，需要手动扩容
 		//nready == -1(int--->size_t)
 		//for(size_t idx = 99; idx > 0; idx -=2)
 		//{
 		//
 		//}
-		if((int)_evtList.size() == nready)
-		{
+		if((int)_evtList.size() == nready) {
 			_evtList.resize(2 * nready);
 		}
 
-		for(int idx = 0; idx < nready; ++idx)
-		{
+		for(int idx = 0; idx < nready; ++idx) {
 			int fd       = _evtList[idx].data.fd;
 			int listenfd = _acceptor.fd();
-			if(fd == listenfd)
-			{
+			if(fd == listenfd) {
 				//有新的连接请求上来
 				handleNewConnection();
-			}
-			else if(fd == _evtfd) //用于通信的文件描述符就绪了
+			} else if(fd == _evtfd) //用于通信的文件描述符就绪了
 			{
 				handleRead();
 				//然后执行所有的任务
 				doPengdingFunctors();
-			}
-			else
-			{
+			} else {
 				//处理老的连接
 				handleMessage(fd);
 			}
@@ -115,8 +102,7 @@ void EventLoop::handleNewConnection()
 	//调用Acceptor的accept函数，如果该函数的返回值
 	//connfd是正常值，就表明三次握手建立成功了
 	int connfd = _acceptor.accept();
-	if(connfd < 0)
-	{
+	if(connfd < 0) {
 		perror("handleNewConnection");
 		return;
 	}
@@ -145,29 +131,23 @@ void EventLoop::handleNewConnection()
 void EventLoop::handleMessage(int fd)
 {
 	auto it = _conns.find(fd);
-	if(it != _conns.end())
-	{
+	if(it != _conns.end()) {
 		//拿到这个连接之后，如何判断连接是不是断开的呢
 		//如果连接断开就可以执行连接断开的事件
 		//否则就执行消息到达的事件
 		bool flag = it->second->isClosed();
-		if(flag)
-		{
+		if(flag) {
 			//连接断开
 			it->second->handleCloseCallback(); //连接断开的事件的触发时机
 			//将fd从红黑树上删除
 			delEpollReadFd(fd);
 			//还需要将连接从map中删除
 			_conns.erase(it);
-		}
-		else
-		{
+		} else {
 			//连接没有断开，可以正常收发数据
 			it->second->handleMessageCallback(); //消息到达
 		}
-	}
-	else
-	{
+	} else {
 		cout << "该连接是不存在" << endl;
 		return;
 	}
@@ -177,8 +157,7 @@ void EventLoop::handleMessage(int fd)
 int EventLoop::createEpollFd()
 {
 	int fd = epoll_create(10);
-	if(fd < 0)
-	{
+	if(fd < 0) {
 		perror("createEpollFd");
 		return -1;
 	}
@@ -194,8 +173,7 @@ void EventLoop::addEpollReadFd(int fd)
 	evt.events  = EPOLLIN;
 
 	int ret = epoll_ctl(_epfd, EPOLL_CTL_ADD, fd, &evt);
-	if(ret < 0)
-	{
+	if(ret < 0) {
 		perror("addEpollReadFd");
 		return;
 	}
@@ -209,8 +187,7 @@ void EventLoop::delEpollReadFd(int fd)
 	evt.events  = EPOLLIN;
 
 	int ret = epoll_ctl(_epfd, EPOLL_CTL_DEL, fd, &evt);
-	if(ret < 0)
-	{
+	if(ret < 0) {
 		perror("delEpollReadFd");
 		return;
 	}
@@ -235,8 +212,7 @@ void EventLoop::setCloseCallback(TcpConnectionCallback &&cb)
 int EventLoop::createEventFd()
 {
 	int fd = eventfd(10, 0);
-	if(fd < 0)
-	{
+	if(fd < 0) {
 		perror("createEventFd");
 		return -1;
 	}
@@ -249,8 +225,7 @@ void EventLoop::handleRead()
 {
 	uint64_t one = 1;
 	ssize_t  ret = read(_evtfd, &one, sizeof(uint64_t));
-	if(ret != sizeof(uint64_t))
-	{
+	if(ret != sizeof(uint64_t)) {
 		perror("handleRead");
 		return;
 	}
@@ -261,8 +236,7 @@ void EventLoop::wakeup()
 {
 	uint64_t one = 1;
 	ssize_t  ret = write(_evtfd, &one, sizeof(uint64_t));
-	if(ret != sizeof(uint64_t))
-	{
+	if(ret != sizeof(uint64_t)) {
 		perror("wakeup");
 		return;
 	}
@@ -278,8 +252,7 @@ void EventLoop::doPengdingFunctors()
 		tmp.swap(_pendings);
 	}
 
-	for(auto &cb : tmp)
-	{
+	for(auto &cb : tmp) {
 		//“任务”就是要发送的数据msg，以及发送数据的能力的send
 		//以及发送的连接TcpConnection对象
 		cb(); //这就是执行所有存放在vector中的"任务"

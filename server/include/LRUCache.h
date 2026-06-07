@@ -27,8 +27,8 @@ public:
 	LRUCache &operator=(LRUCache &&rhs) noexcept;
 
 	optional<string> get(const string &key);
-	void set(const string &key, const string &value);
-	vector<string> getKeys() const;
+	void             set(const string &key, const string &value);
+	vector<string>   getKeys() const;
 
 	size_t size() const { return _map.size(); }
 	bool   empty() const { return _map.empty(); }
@@ -39,10 +39,10 @@ private:
 		string value;
 	};
 
-	size_t _capacity;
-	list<CacheNode> _list;
+	size_t                                           _capacity;
+	list<CacheNode>                                  _list;
 	unordered_map<string, list<CacheNode>::iterator> _map;
-	mutable mutex _mutex;
+	mutable mutex                                    _mutex;
 };
 
 #endif

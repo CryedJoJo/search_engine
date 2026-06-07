@@ -21,8 +21,7 @@ void handle_sigint(int sig)
 	// FIX: 将其放入注释中
 	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 	// TODO: 调用 server.stop();
-	if(nullptr != global_server)
-	{
+	if(nullptr != global_server) {
 		global_server->stop();
 	}
 #ifdef LRUCACHE_ON

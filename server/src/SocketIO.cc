@@ -26,24 +26,16 @@ int SocketIO::readn(char *buf, int len)
 	char *pstr = buf;
 	int   ret  = 0;
 
-	while(left > 0)
-	{
+	while(left > 0) {
 		ret = read(_fd, pstr, left);
-		if(-1 == ret && errno == EINTR)
-		{
+		if(-1 == ret && errno == EINTR) {
 			continue;
-		}
-		else if(-1 == ret)
-		{
+		} else if(-1 == ret) {
 			perror("read error -1");
 			return -1;
-		}
-		else if(0 == ret)
-		{
+		} else if(0 == ret) {
 			break;
-		}
-		else
-		{
+		} else {
 			pstr += ret;
 			left -= ret;
 		}
@@ -58,29 +50,19 @@ int SocketIO::readLine(char *buf, int len)
 	char *pstr = buf;
 	int   ret = 0, total = 0;
 
-	while(left > 0)
-	{
+	while(left > 0) {
 		//MSG_PEEK不会将缓冲区中的数据进行清空,只会进行拷贝操作
 		ret = recv(_fd, pstr, left, MSG_PEEK);
-		if(-1 == ret && errno == EINTR)
-		{
+		if(-1 == ret && errno == EINTR) {
 			continue;
-		}
-		else if(-1 == ret)
-		{
+		} else if(-1 == ret) {
 			perror("readLine error -1");
 			return -1;
-		}
-		else if(0 == ret)
-		{
+		} else if(0 == ret) {
 			break;
-		}
-		else
-		{
-			for(int idx = 0; idx < ret; ++idx)
-			{
-				if(pstr[idx] == '\n')
-				{
+		} else {
+			for(int idx = 0; idx < ret; ++idx) {
+				if(pstr[idx] == '\n') {
 					int sz = idx + 1;
 					readn(pstr, sz);
 					pstr += sz;
@@ -107,24 +89,16 @@ int SocketIO::writen(const char *buf, int len)
 	const char *pstr = buf;
 	int         ret  = 0;
 
-	while(left > 0)
-	{
+	while(left > 0) {
 		ret = write(_fd, pstr, left);
-		if(-1 == ret && errno == EINTR)
-		{
+		if(-1 == ret && errno == EINTR) {
 			continue;
-		}
-		else if(-1 == ret)
-		{
+		} else if(-1 == ret) {
 			perror("writen error -1");
 			return -1;
-		}
-		else if(0 == ret)
-		{
+		} else if(0 == ret) {
 			break;
-		}
-		else
-		{
+		} else {
 			pstr += ret;
 			left -= ret;
 		}

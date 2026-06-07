@@ -19,7 +19,7 @@ public:
 private:
 	string           _msg;
 	TcpConnectionPtr _con;
-	bool _dictInitFlag {false};
+	bool             _dictInitFlag{false};
 	// bind函数绑定MyTask时 绑定的类必须时可赋值的，unique指针是不可复制的！！！
 	// std::unique_ptr<vector<pair<string, int>>> _dict{nullptr}; // 词典 TODO：改成static 25-6-24 22点33分 //修改为数据成员
 	// std::unique_ptr<map<string, set<int>>>     _index {nullptr};

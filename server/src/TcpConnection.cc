@@ -35,26 +35,26 @@ TcpConnection::~TcpConnection()
 
 bool TcpConnection::send(const string &msg)
 {
-    // 1. 准备4字节网络字节序的长度头
-    uint32_t len = msg.size();  // 原始长度
-    uint32_t netLen = htonl(len); // 转换为网络字节序（大端）
+	// 1. 准备4字节网络字节序的长度头
+	uint32_t len    = msg.size(); // 原始长度
+	uint32_t netLen = htonl(len); // 转换为网络字节序（大端）
 
-    // 2. 先发送长度头 (固定4字节)
-    int ret = _sockIO.writen(reinterpret_cast<const char*>(&netLen), sizeof(netLen));
-    if(ret != sizeof(netLen)) {  // 必须完整发送4字节
-        ERROR("Failed to send length header, ret:{}", ret);
-        return false;
-    }
+	// 2. 先发送长度头 (固定4字节)
+	int ret = _sockIO.writen(reinterpret_cast<const char *>(&netLen), sizeof(netLen));
+	if(ret != sizeof(netLen)) { // 必须完整发送4字节
+		ERROR("Failed to send length header, ret:{}", ret);
+		return false;
+	}
 
-    // 3. 再发送消息内容
-    if(len > 0) {  // 避免空消息
-        ret = _sockIO.writen(msg.c_str(), len);
-        if(ret != static_cast<int>(len)) {
-            ERROR("Failed to send message content, sent {}/{} bytes", ret, len);
-            return false;
-        }
-    }
-    return true;
+	// 3. 再发送消息内容
+	if(len > 0) { // 避免空消息
+		ret = _sockIO.writen(msg.c_str(), len);
+		if(ret != static_cast<int>(len)) {
+			ERROR("Failed to send message content, sent {}/{} bytes", ret, len);
+			return false;
+		}
+	}
+	return true;
 }
 
 //需要做什么？
@@ -67,8 +67,7 @@ bool TcpConnection::send(const string &msg)
 //这样才能将数据发给客户端
 bool TcpConnection::sendInLoop(const string &msg)
 {
-	if(_loop)
-	{
+	if(_loop) {
 		/* function<void()> f = bind(&TcpConnection::send, this, msg); */
 		//void runInLoop(function<void()> &&)
 		_loop->runInLoop(bind(&TcpConnection::send, this, msg));
@@ -104,7 +103,7 @@ string TcpConnection::receive()
 bool TcpConnection::isClosed() const
 {
 	char buff[100] = {0};
-	int  ret      = ::recv(_sock.fd(), buff, sizeof(buff), MSG_PEEK);
+	int  ret       = ::recv(_sock.fd(), buff, sizeof(buff), MSG_PEEK);
 
 	return (0 == ret);
 }
@@ -126,8 +125,7 @@ InetAddress TcpConnection::getLocalAddr()
 	socklen_t          len = sizeof(struct sockaddr);
 	//获取本端地址的函数getsockname
 	int ret = getsockname(_sock.fd(), (struct sockaddr *)&addr, &len);
-	if(-1 == ret)
-	{
+	if(-1 == ret) {
 		perror("getsockname");
 		ERROR("getsockname bad return ret:{}", ret);
 	}
@@ -142,8 +140,7 @@ InetAddress TcpConnection::getPeerAddr()
 	socklen_t          len = sizeof(struct sockaddr);
 	//获取对端地址的函数getpeername
 	int ret = getpeername(_sock.fd(), (struct sockaddr *)&addr, &len);
-	if(-1 == ret)
-	{
+	if(-1 == ret) {
 		perror("getpeername");
 		ERROR("getpeername bad return ret:{}", ret);
 	}
@@ -170,14 +167,11 @@ void TcpConnection::setCloseCallback(const TcpConnectionCallback &cb)
 //三个回调的执行
 void TcpConnection::handleNewConnectionCallback()
 {
-	if(_onNewConnectionCb)
-	{
+	if(_onNewConnectionCb) {
 		/* shared_ptr<TcpConnection> ttt(this); */
 		/* _onNewConnectionCb(shared_ptr<TcpConnection>(this)); */
 		_onNewConnectionCb(shared_from_this());
-	}
-	else
-	{
+	} else {
 		cout << "_onNewConnectionCb == nullptr" << endl;
 		ERROR("_onNewConnectionCb == nullptr");
 	}
@@ -185,12 +179,9 @@ void TcpConnection::handleNewConnectionCallback()
 
 void TcpConnection::handleMessageCallback()
 {
-	if(_onMessageCb)
-	{
+	if(_onMessageCb) {
 		_onMessageCb(shared_from_this());
-	}
-	else
-	{
+	} else {
 		cout << "_onMessageCb == nullptr" << endl;
 		ERROR("_onMessageCb == nullptr");
 	}
@@ -198,12 +189,9 @@ void TcpConnection::handleMessageCallback()
 
 void TcpConnection::handleCloseCallback()
 {
-	if(_onCloseCb)
-	{
+	if(_onCloseCb) {
 		_onCloseCb(shared_from_this());
-	}
-	else
-	{
+	} else {
 		cout << "_onCloseCb == nullptr" << endl;
 		ERROR("_onCloseCb == nullptr");
 	}

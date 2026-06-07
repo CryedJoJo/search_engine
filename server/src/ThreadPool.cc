@@ -21,8 +21,7 @@ void ThreadPool::start()
 {
 	INFO("thread pool start...");
 	// 创建线程，并且存放在容器中
-	for(size_t idx = 0; idx != _threadNum; ++idx)
-	{
+	for(size_t idx = 0; idx != _threadNum; ++idx) {
 		_threads.emplace_back(thread(&ThreadPool::doTask, this));
 	}
 }
@@ -40,11 +39,10 @@ void ThreadPool::stop()
 	// FIX: 增加最大重试次数，防止无限循环
 	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 	int retries = 30; // 最多等待 30s
-	while(!_taskQue.empty() && retries-- > 0)
-	{
+	while(!_taskQue.empty() && retries-- > 0) {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
-	if(retries < 0){
+	if(retries < 0) {
 		WARN("ThreadPool::stop() timeout waiting for task queue to drain");
 	}
 	//线程池要退出，那么标志位可以设置为true
@@ -52,8 +50,7 @@ void ThreadPool::stop()
 	//唤醒所有等待在_notEmpty上的线程
 	_taskQue.wakeup();
 
-	for(auto &th : _threads)
-	{
+	for(auto &th : _threads) {
 		th.join();
 	}
 }
@@ -61,8 +58,7 @@ void ThreadPool::stop()
 //添加任务与获取任务
 void ThreadPool::addTask(Task &&taskcb)
 {
-	if(taskcb)
-	{
+	if(taskcb) {
 		_taskQue.push(std::move(taskcb));
 	}
 }
@@ -75,17 +71,13 @@ Task ThreadPool::getTask()
 //线程池交给工作线程thread执行的任务
 void ThreadPool::doTask()
 {
-	while(!_isExit)
-	{
+	while(!_isExit) {
 		//线程池中的线程需要先获取任务，然后执行任务
 		Task taskcb = getTask();
-		if(taskcb)
-		{
+		if(taskcb) {
 			/* ptask->process();//会体现出多态 */
 			taskcb(); //回调
-		}
-		else
-		{
+		} else {
 			ERROR("task call back is nullptr");
 			cout << "taskcb == nullptr" << endl;
 		}

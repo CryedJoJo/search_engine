@@ -7,8 +7,7 @@
 Socket::Socket()
 {
 	_fd = ::socket(AF_INET, SOCK_STREAM, 0);
-	if(_fd < 0)
-	{
+	if(_fd < 0) {
 		perror("socket");
 		return;
 	}
@@ -33,8 +32,7 @@ void Socket::shutDownWrite()
 {
 	//关闭写端
 	int ret = shutdown(_fd, SHUT_WR);
-	if(ret)
-	{
+	if(ret) {
 		perror("shutdown");
 		return;
 	}

@@ -8,7 +8,7 @@ CacheManager *CacheManager::_instance = nullptr;
 
 CacheManager *CacheManager::getInstance()
 {
-	if(nullptr == _instance){
+	if(nullptr == _instance) {
 		_instance = new CacheManager();
 	}
 	return _instance;
@@ -16,7 +16,7 @@ CacheManager *CacheManager::getInstance()
 
 void CacheManager::destroy()
 {
-	if(nullptr != _instance){
+	if(nullptr != _instance) {
 		delete _instance;
 		_instance = nullptr;
 	}
@@ -59,7 +59,7 @@ optional<string> CacheManager::get(const TcpConnectionPtr &con, const string &ke
 	lock_guard<mutex> lg(_mapMutex);
 
 	auto it = _caches.find(con);
-	if(it == _caches.end()){
+	if(it == _caches.end()) {
 		return std::nullopt;
 	}
 	return it->second.active->get(key);
@@ -70,14 +70,14 @@ void CacheManager::set(const TcpConnectionPtr &con, const string &key, const str
 	lock_guard<mutex> lg(_mapMutex);
 
 	auto it = _caches.find(con);
-	if(it != _caches.end()){
+	if(it != _caches.end()) {
 		it->second.active->set(key, value);
 	}
 }
 
 void CacheManager::startSync()
 {
-	if(_running.load()){
+	if(_running.load()) {
 		return;
 	}
 	_running.store(true);
@@ -87,11 +87,11 @@ void CacheManager::startSync()
 
 void CacheManager::stopSync()
 {
-	if(!_running.load()){
+	if(!_running.load()) {
 		return;
 	}
 	_running.store(false);
-	if(_syncThread.joinable()){
+	if(_syncThread.joinable()) {
 		_syncThread.join();
 	}
 	INFO("CacheManager sync thread stopped");
@@ -99,9 +99,9 @@ void CacheManager::stopSync()
 
 void CacheManager::syncLoop()
 {
-	while(_running.load()){
+	while(_running.load()) {
 		std::this_thread::sleep_for(std::chrono::seconds(30));
-		if(!_running.load()){
+		if(!_running.load()) {
 			break;
 		}
 		syncAll();
@@ -121,12 +121,12 @@ void CacheManager::syncAll()
 		lock_guard<mutex> lg(_mapMutex);
 
 		syncCaches.reserve(_caches.size());
-		for(auto &pair : _caches){
+		for(auto &pair : _caches) {
 			std::swap(pair.second.active, pair.second.sync);
 			// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 			// FIX: 持有 shared_ptr 引用，防止同步过程中连接关闭导致 UAF
 			// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
-			if(pair.second.sync == pair.second.cache1.get()){
+			if(pair.second.sync == pair.second.cache1.get()) {
 				syncCaches.push_back(pair.second.cache1);
 			} else {
 				syncCaches.push_back(pair.second.cache2);
@@ -134,7 +134,7 @@ void CacheManager::syncAll()
 		}
 	}
 
-	if(syncCaches.empty()){
+	if(syncCaches.empty()) {
 		return;
 	}
 
@@ -144,11 +144,11 @@ void CacheManager::syncAll()
 	LRUCache *target = syncCaches[0].get();
 
 	// === 第一趟：将所有非锚点 cache 的数据通过 get/set 合并到锚点 ===
-	for(size_t i = 1; i < syncCaches.size(); ++i){
+	for(size_t i = 1; i < syncCaches.size(); ++i) {
 		auto keys = syncCaches[i]->getKeys();
-		for(auto &key : keys){
+		for(auto &key : keys) {
 			auto val = syncCaches[i]->get(key);
-			if(val){
+			if(val) {
 				target->set(key, *val);
 			}
 		}
@@ -156,10 +156,10 @@ void CacheManager::syncAll()
 
 	// === 第二趟：以锚点中的 key 为准，用 get/set 广播到所有其他 cache ===
 	auto targetKeys = target->getKeys();
-	for(size_t i = 1; i < syncCaches.size(); ++i){
-		for(auto &key : targetKeys){
+	for(size_t i = 1; i < syncCaches.size(); ++i) {
+		for(auto &key : targetKeys) {
 			auto val = target->get(key);
-			if(val){
+			if(val) {
 				syncCaches[i]->set(key, *val);
 			}
 		}
@@ -170,22 +170,24 @@ void CacheManager::syncAll()
 
 	// 流控 debug 日志：每 60s 打印一次各连接 cache 中的 key
 	auto now = std::chrono::steady_clock::now();
-	if(now - _lastDebugLogTime >= std::chrono::seconds(60)){
+	if(now - _lastDebugLogTime >= std::chrono::seconds(60)) {
 		_lastDebugLogTime = now;
 
 		lock_guard<mutex> lg(_mapMutex);
-		for(auto &entry : _caches){
-			string connInfo = entry.first->toString();
-			auto activeKeys = entry.second.active->getKeys();
-			auto syncKeys   = entry.second.sync->getKeys();
+		for(auto &entry : _caches) {
+			string connInfo   = entry.first->toString();
+			auto   activeKeys = entry.second.active->getKeys();
+			auto   syncKeys   = entry.second.sync->getKeys();
 
 			string activeKeyStr, syncKeyStr;
-			for(auto &key : activeKeys){
-				if(!activeKeyStr.empty()) activeKeyStr += ", ";
+			for(auto &key : activeKeys) {
+				if(!activeKeyStr.empty())
+					activeKeyStr += ", ";
 				activeKeyStr += key;
 			}
-			for(auto &key : syncKeys){
-				if(!syncKeyStr.empty()) syncKeyStr += ", ";
+			for(auto &key : syncKeys) {
+				if(!syncKeyStr.empty())
+					syncKeyStr += ", ";
 				syncKeyStr += key;
 			}
 

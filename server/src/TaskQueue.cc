@@ -20,8 +20,7 @@ void TaskQueue::push(ElemType &&taskcb)
 	//1、先上锁
 	unique_lock<mutex> ul(_mutex);
 	//2、判满
-	while(full())
-	{
+	while(full()) {
 		//上半部：先上锁、解锁、睡眠
 		//下半部：被唤醒、抢到锁、函数返回
 		//2.1、如果是满的，睡眠
@@ -38,15 +37,13 @@ ElemType TaskQueue::pop()
 	//1、先上锁
 	unique_lock<mutex> ul(_mutex);
 	//2、判空
-	while(empty() && _flag)
-	{
+	while(empty() && _flag) {
 		//上半部：先上锁、解锁、睡眠
 		//下半部：被唤醒、抢到锁、函数返回
 		//2.1、如果是满的，睡眠
 		_notEmpty.wait(ul);
 	}
-	if(_flag)
-	{
+	if(_flag) {
 		//3、消费数据
 		ElemType tmp = _que.front();
 		_que.pop();
@@ -55,9 +52,7 @@ ElemType TaskQueue::pop()
 		//解锁
 
 		return tmp;
-	}
-	else
-	{
+	} else {
 		return nullptr;
 	}
 }

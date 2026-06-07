@@ -25,8 +25,7 @@ void Acceptor::setReuseAddr()
 {
 	int on  = 1;
 	int ret = setsockopt(_sock.fd(), SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-	if(ret)
-	{
+	if(ret) {
 		perror("setsockopt");
 		return;
 	}
@@ -36,8 +35,7 @@ void Acceptor::setReusePort()
 {
 	int on  = 1;
 	int ret = setsockopt(_sock.fd(), SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
-	if(-1 == ret)
-	{
+	if(-1 == ret) {
 		perror("setsockopt");
 		return;
 	}
@@ -48,8 +46,7 @@ void Acceptor::bind()
 	int ret = ::bind(_sock.fd(),
 	                 (struct sockaddr *)_addr.getInetAddrPtr(),
 	                 sizeof(struct sockaddr));
-	if(-1 == ret)
-	{
+	if(-1 == ret) {
 		perror("bind");
 		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 		// BUG: exit(-1) 直接终止进程，不调用任何析构函数或清理代码
@@ -64,8 +61,7 @@ void Acceptor::bind()
 void Acceptor::listen()
 {
 	int ret = ::listen(_sock.fd(), 128);
-	if(-1 == ret)
-	{
+	if(-1 == ret) {
 		perror("listen");
 		return;
 	}
@@ -74,8 +70,7 @@ void Acceptor::listen()
 int Acceptor::accept()
 {
 	int connfd = ::accept(_sock.fd(), nullptr, nullptr);
-	if(-1 == connfd)
-	{
+	if(-1 == connfd) {
 		perror("accept");
 		return -1;
 	}

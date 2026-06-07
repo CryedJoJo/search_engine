@@ -32,8 +32,7 @@ void seekRecommendWd(string &_msg, map<string, int> &condidate, vector<string> &
 	// FIX: 初始化为 0
 	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 	int topFreq = 0;
-	for(auto &elem : condidate)
-	{
+	for(auto &elem : condidate) {
 		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 		// BUG: 运算符优先级 — '=' 优先级低于 '<'，distence 始终为 0 或 1（bool）
 		// if(distence = editDistance(_msg, elem.first) < 5)
@@ -50,8 +49,7 @@ void seekRecommendWd(string &_msg, map<string, int> &condidate, vector<string> &
 	}
 
 	int maxRecommend = 15;
-	while(!pq.empty() && maxRecommend--)
-	{
+	while(!pq.empty() && maxRecommend--) {
 
 		auto top = pq.top();
 		ret.emplace_back(top.second);
@@ -63,16 +61,12 @@ void seekRecommendWd(string &_msg, map<string, int> &condidate, vector<string> &
 //清洗中文的.cc文件中重复写了nBytesCode 因为没包含这个文件
 size_t nBytesCode(const char ch)
 {
-	if(ch & (1 << 7))
-	{
+	if(ch & (1 << 7)) {
 		int nBytes = 1;
-		for(int idx = 0; idx != 6; ++idx)
-		{
-			if(ch & (1 << (6 - idx)))
-			{
+		for(int idx = 0; idx != 6; ++idx) {
+			if(ch & (1 << (6 - idx))) {
 				++nBytes;
-			}
-			else
+			} else
 				break;
 		}
 		return nBytes;
@@ -82,8 +76,7 @@ size_t nBytesCode(const char ch)
 std::size_t length(const std::string &str)
 {
 	std::size_t ilen = 0;
-	for(std::size_t idx = 0; idx != str.size(); ++idx)
-	{
+	for(std::size_t idx = 0; idx != str.size(); ++idx) {
 		int nBytes = nBytesCode(str[idx]);
 		idx += (nBytes - 1);
 		++ilen;
@@ -107,33 +100,26 @@ int editDistance(const std::string &lhs, const std::string &rhs)
 	// FIX: 改用 vector 在堆上分配
 	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 	vector<vector<int>> editDist(lhs_len + 1, vector<int>(rhs_len + 1, 0));
-	for(size_t idx = 0; idx <= lhs_len; ++idx)
-	{
+	for(size_t idx = 0; idx <= lhs_len; ++idx) {
 		editDist[idx][0] = idx;
 	}
-	for(size_t idx = 0; idx <= rhs_len; ++idx)
-	{
+	for(size_t idx = 0; idx <= rhs_len; ++idx) {
 		editDist[0][idx] = idx;
 	}
 	std::string sublhs, subrhs;
 	for(std::size_t dist_i = 1, lhs_idx = 0; dist_i <= lhs_len; ++dist_i,
-	                ++lhs_idx)
-	{
+	                ++lhs_idx) {
 		size_t nBytes = nBytesCode(lhs[lhs_idx]);
 		sublhs        = lhs.substr(lhs_idx, nBytes);
 		lhs_idx += (nBytes - 1);
 		for(std::size_t dist_j = 1, rhs_idx = 0;
-		    dist_j <= rhs_len; ++dist_j, ++rhs_idx)
-		{
+		    dist_j <= rhs_len; ++dist_j, ++rhs_idx) {
 			nBytes = nBytesCode(rhs[rhs_idx]);
 			subrhs = rhs.substr(rhs_idx, nBytes);
 			rhs_idx += (nBytes - 1);
-			if(sublhs == subrhs)
-			{
+			if(sublhs == subrhs) {
 				editDist[dist_i][dist_j] = editDist[dist_i - 1][dist_j - 1];
-			}
-			else
-			{
+			} else {
 				editDist[dist_i][dist_j] =
 				    triple_min(editDist[dist_i][dist_j - 1] + 1,
 				               editDist[dist_i - 1][dist_j] + 1,

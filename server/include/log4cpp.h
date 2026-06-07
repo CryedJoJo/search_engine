@@ -306,11 +306,15 @@ public:
 			delete _roll;
 		}
 
-		if(nullptr == _searcher2){
-
-		} else {
-			delete _searcher2;
-		}
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// BUG: delete log4cpp Category 对象导致未定义行为（由 log4cpp 内部管理）
+		// if(nullptr == _searcher2){
+		// } else {
+		//     delete _searcher2;
+		// }
+		// FIX: 仅置 nullptr，不删除
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		_searcher2 = nullptr;
 
 		if(nullptr == _pointor)
 		{

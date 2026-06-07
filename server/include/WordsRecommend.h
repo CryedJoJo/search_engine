@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <queue>
+#include <vector>
 using namespace std;
 
 int editDistance(const std::string &lhs, const std::string &rhs);
@@ -25,10 +26,20 @@ void seekRecommendWd(string &_msg, map<string, int> &condidate, vector<string> &
 	// 假设我们存储字符串长度作为与查询的“编辑距离”的简化表示
 
 	int distence;
-	int topFreq;
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: topFreq 未初始化即使用（未定义行为）
+	// int topFreq;
+	// FIX: 初始化为 0
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	int topFreq = 0;
 	for(auto &elem : condidate)
 	{
-		if(distence = editDistance(_msg, elem.first) < 5) //编辑距离小于3
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// BUG: 运算符优先级 — '=' 优先级低于 '<'，distence 始终为 0 或 1（bool）
+		// if(distence = editDistance(_msg, elem.first) < 5)
+		// FIX: 添加显式括号保证正确赋值
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		if((distence = editDistance(_msg, elem.first)) < 5) //编辑距离小于3
 		{
 			if(topFreq < elem.second)
 				topFreq = elem.second;
@@ -90,7 +101,12 @@ int editDistance(const std::string &lhs, const std::string &rhs)
 	//计算最小编辑距离-包括处理中英文
 	size_t lhs_len = length(lhs);
 	size_t rhs_len = length(rhs);
-	int    editDist[lhs_len + 1][rhs_len + 1];
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: VLA（变长数组）非标准 C++，存在栈溢出风险
+	// int    editDist[lhs_len + 1][rhs_len + 1];
+	// FIX: 改用 vector 在堆上分配
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	vector<vector<int>> editDist(lhs_len + 1, vector<int>(rhs_len + 1, 0));
 	for(size_t idx = 0; idx <= lhs_len; ++idx)
 	{
 		editDist[idx][0] = idx;

@@ -1,6 +1,7 @@
 #include "Acceptor.h"
 #include <stdio.h>
 #include <iostream>
+#include <stdexcept>
 
 Acceptor::Acceptor(const string &ip, unsigned short port)
     : _sock()
@@ -50,7 +51,12 @@ void Acceptor::bind()
 	if(-1 == ret)
 	{
 		perror("bind");
-		exit(-1);
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// BUG: exit(-1) 直接终止进程，不调用任何析构函数或清理代码
+		// exit(-1);
+		// FIX: 抛出异常以执行正确的栈展开
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		throw std::runtime_error("bind() failed");
 		return;
 	}
 }

@@ -2,6 +2,9 @@
 #include "EventLoop.h"
 #include <iostream>
 #include <sstream>
+#include <cstring>
+#include <vector>
+#include <arpa/inet.h>
 
 using std::cout;
 using std::endl;
@@ -75,15 +78,27 @@ bool TcpConnection::sendInLoop(const string &msg)
 }
 string TcpConnection::receive()
 {
-	//读取头部
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: send() 发送的是 4 字节二进制长度头（htonl），但 receive() 用 readLine()（文本式，遇 '\n' 停止）
+	// 若二进制长度字节中出现 0x0A，会导致读取提前截断，解析错位
+	// char head[4] = {0};
+	// _sockIO.readLine(head, sizeof(int));
+	// string h(head);
+	// char buff[65535] = {0};
+	// _sockIO.readLine(buff, sizeof(buff));
+	// FIX: 改用 readn 读取固定 4 字节长度头，再 readn 读取完整报文
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 	char head[4] = {0};
-	_sockIO.readLine(head, sizeof(int));
-	string h(head);
-	//读取数据
-	char buff[65535] = {0};
-	_sockIO.readLine(buff, sizeof(buff));
+	_sockIO.readn(head, sizeof(head));
+	uint32_t netLen;
+	memcpy(&netLen, head, sizeof(netLen));
+	uint32_t len = ntohl(netLen);
 
-	return h + string(buff);
+	vector<char> buf(len + 1, 0);
+	_sockIO.readn(buf.data(), len);
+	buf[len] = '\0';
+
+	return string(buf.data());
 }
 
 bool TcpConnection::isClosed() const

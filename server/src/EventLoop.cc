@@ -64,9 +64,13 @@ void EventLoop::waitEpollFd()
 	}
 	else if(0 == nready)
 	{
-		static uint32_t time = 0;
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// BUG: 静态变量在单线程 epoll 中访问，若将来 EventLoop 多线程化将出现数据竞争
+		// static uint32_t time = 0;
+		// FIX: 改为局部变量（仅用于调试输出，无需跨调用持久化）
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		uint32_t time = 0;
 		cout << ">>epoll_wait timeout!!! server online:" << time << "s" << endl;
-		time += 3;
 	}
 	else
 	{

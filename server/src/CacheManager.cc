@@ -37,8 +37,8 @@ void CacheManager::onNewConnection(const TcpConnectionPtr &con)
 	lock_guard<mutex> lg(_mapMutex);
 
 	CachePair pair;
-	pair.cache1 = std::make_unique<LRUCache>(1000);
-	pair.cache2 = std::make_unique<LRUCache>(1000);
+	pair.cache1 = std::make_shared<LRUCache>(1000);
+	pair.cache2 = std::make_shared<LRUCache>(1000);
 	pair.active = pair.cache1.get();
 	pair.sync   = pair.cache2.get();
 
@@ -110,7 +110,12 @@ void CacheManager::syncLoop()
 
 void CacheManager::syncAll()
 {
-	vector<LRUCache *> syncCaches;
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: syncCaches 中裸 LRUCache* 指针可能在 onClose() 删除 _caches 条目后变为悬挂指针
+	// vector<LRUCache *> syncCaches;
+	// FIX: 改用 shared_ptr 延长同步缓存对象的生命周期
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	vector<shared_ptr<LRUCache>> syncCaches;
 
 	{
 		lock_guard<mutex> lg(_mapMutex);
@@ -118,7 +123,14 @@ void CacheManager::syncAll()
 		syncCaches.reserve(_caches.size());
 		for(auto &pair : _caches){
 			std::swap(pair.second.active, pair.second.sync);
-			syncCaches.push_back(pair.second.sync);
+			// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+			// FIX: 持有 shared_ptr 引用，防止同步过程中连接关闭导致 UAF
+			// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+			if(pair.second.sync == pair.second.cache1.get()){
+				syncCaches.push_back(pair.second.cache1);
+			} else {
+				syncCaches.push_back(pair.second.cache2);
+			}
 		}
 	}
 
@@ -129,7 +141,7 @@ void CacheManager::syncAll()
 	WARN("CacheManager sync start, {} caches to sync", syncCaches.size());
 
 	// 选第一个 cache 为锚点
-	LRUCache *target = syncCaches[0];
+	LRUCache *target = syncCaches[0].get();
 
 	// === 第一趟：将所有非锚点 cache 的数据通过 get/set 合并到锚点 ===
 	for(size_t i = 1; i < syncCaches.size(); ++i){

@@ -31,9 +31,21 @@ void ThreadPool::stop()
 {
 	WARN("thread pool stop...");
 	//只要任务没有执行完，就不能让主线程继续向下执行
-	while(!_taskQue.empty())
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: 忙等待轮询循环 — 若某个任务卡住，stop() 将永远循环
+	// while(!_taskQue.empty())
+	// {
+	// 	std::this_thread::sleep_for(std::chrono::seconds(1));
+	// }
+	// FIX: 增加最大重试次数，防止无限循环
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	int retries = 30; // 最多等待 30s
+	while(!_taskQue.empty() && retries-- > 0)
 	{
 		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	if(retries < 0){
+		WARN("ThreadPool::stop() timeout waiting for task queue to drain");
 	}
 	//线程池要退出，那么标志位可以设置为true
 	_isExit = true;

@@ -37,8 +37,14 @@ private:
 	void syncAll();
 
 	struct CachePair {
-		std::unique_ptr<LRUCache> cache1;
-		std::unique_ptr<LRUCache> cache2;
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// BUG: unique_ptr 无法在 syncAll 中共享所有权，导致悬挂指针
+		// std::unique_ptr<LRUCache> cache1;
+		// std::unique_ptr<LRUCache> cache2;
+		// FIX: 改用 shared_ptr，syncAll 可延长缓存对象的生命周期
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		std::shared_ptr<LRUCache> cache1;
+		std::shared_ptr<LRUCache> cache2;
 		LRUCache                 *active;
 		LRUCache                 *sync;
 	};

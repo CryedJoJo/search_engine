@@ -150,7 +150,12 @@ void MyTask::searchProcess()
 
 	//TODO:
 	//加载清洗后的离线网页库 用seekg(pos)+read(lenght)来获取网页
-	static ifstream web_page(CLEANED_WEB_PAGE, std::ios::binary);
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: 静态 ifstream 被线程池多个线程共享，seekg/read 存在数据竞争
+	// static ifstream web_page(CLEANED_WEB_PAGE, std::ios::binary);
+	// FIX: 改为局部 ifstream（每次调用重新打开文件）保证线程安全
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	ifstream web_page(CLEANED_WEB_PAGE, std::ios::binary);
 	if(!web_page.is_open())
 	{
 		string file_name {"cleanedWebPage.txt"};
@@ -190,9 +195,12 @@ void MyTask::searchProcess()
 		}
 	}
 
-	static uint32_t times = 1;
-	DEBUG("start calculating vectors of message times:{}", times);
-	times++;
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: 静态计数器被多线程共享用于调试日志（数据竞争，值无意义）
+	// static uint32_t times = 1;
+	// DEBUG("start calculating vectors of message times:{}", times);
+	// times++;
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 
 	int TF;        //_msg中某word出现的频率
 	int DF = 1;    //中某word存在于多少文章中 就是把_msg作为文章 所以DF == 1
@@ -296,10 +304,13 @@ void MyTask::searchProcess()
 	else
 	{
 		string msg;
-		static uint32_t times = 0;
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// BUG: 静态计数器被多线程共享（数据竞争）
+		// static uint32_t times = 0;
 		while (!pri_queue.empty()) // 2024-9-21 23:10:11 停用
 		{
-			DEBUG("pop queue times:{}", ++times);
+			// DEBUG("pop queue times:{}", ++times);
+			// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 			cout << "docid:" << pri_queue.top().first << " similarity:" << pri_queue.top().second << "\n";
 
 			int start  = (*LoadFile::getInstance()->_p_offset_map)[pri_queue.top().first].first;
@@ -318,7 +329,9 @@ void MyTask::searchProcess()
 			delete[] buffer;
 			pri_queue.pop();
 		}
-		times = 0;
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+		// times = 0;
+		// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
 		WARN("start send artical");
 	#ifdef REDIS_ON
 		try{

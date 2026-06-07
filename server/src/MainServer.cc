@@ -15,7 +15,12 @@ void handle_sigint(int sig)
 	// cout << "Received SIGINT, shutting down..." << endl;
 	ERROR("Received SIGINT, shutting down...");
 	LoadFile::destroy(); // 调用loadfile的destroy函数
-TODO:                    //调用     server.stop();
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// BUG: TODO: 裸露在函数体中，被当作 C++ 标签（label），不合意图
+	// TODO:                    //调用     server.stop();
+	// FIX: 将其放入注释中
+	// ————————————————————————————————————————————————————————————————————————bug 时间：2026:6:3
+	// TODO: 调用 server.stop();
 	if(nullptr != global_server)
 	{
 		global_server->stop();
